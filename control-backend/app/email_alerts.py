@@ -6,7 +6,7 @@ Tracks sent alerts to avoid duplicates.
 
 import os
 import json
-import logging
+
 from datetime import datetime, timezone
 from typing import List, Dict, Optional
 
@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.models.database import SessionLocal, Viagem, Config, LogEntry, gen_id, utcnow
 
-logger = logging.getLogger("control.alerts")
+
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM = os.getenv("RESEND_FROM", "Control <alerts@resend.dev>")
@@ -52,7 +52,7 @@ def _cleanup_old_keys():
 async def send_email(to: str, subject: str, html: str) -> bool:
     """Send email via Resend API."""
     if not RESEND_API_KEY:
-        logger.warning("RESEND_API_KEY not set — skipping email")
+        print("RESEND_API_KEY not set — skipping email")
         return False
 
     try:
@@ -72,13 +72,13 @@ async def send_email(to: str, subject: str, html: str) -> bool:
                 timeout=10.0,
             )
             if r.status_code in (200, 201):
-                logger.info(f"Email sent to {to}: {subject}")
+                print(f"Email sent to {to}: {subject}")
                 return True
             else:
-                logger.error(f"Resend error {r.status_code}: {r.text}")
+                print(f"Resend error {r.status_code}: {r.text}")
                 return False
     except Exception as e:
-        logger.error(f"Email send failed: {e}")
+        print(f"Email send failed: {e}")
         return False
 
 
@@ -129,6 +129,7 @@ async def check_and_send_alerts():
     Sends one email per new alert event.
     """
     if not RESEND_API_KEY:
+        print("[ALERTS] No RESEND_API_KEY — skipping")
         return
 
     _cleanup_old_keys()
@@ -137,6 +138,7 @@ async def check_and_send_alerts():
     try:
         # Get all configs with email set
         configs = db.query(Config).filter(Config.email != None, Config.email != "").all()
+        print(f"[ALERTS] Found {len(configs)} tenant(s) with alert email configured")
 
         for cfg in configs:
             tenant_id = cfg.tenant_id
@@ -158,6 +160,7 @@ async def check_and_send_alerts():
                 Viagem.tenant_id == tenant_id,
                 Viagem.concluido == False,
             ).all()
+            print(f"[ALERTS] Tenant {tenant_id}: {len(viagens)} active viagens, email={email}")
 
             alerts_to_send: List[Dict] = []
             now = datetime.now(timezone.utc)
@@ -234,6 +237,7 @@ async def check_and_send_alerts():
 
             # Send alerts if any
             if alerts_to_send:
+                print(f"[ALERTS] {len(alerts_to_send)} alerts to send: {[a['message'] for a in alerts_to_send]}")
                 subject = f"Control — {len(alerts_to_send)} alerta{'s' if len(alerts_to_send)>1 else ''} operacional"
 
                 # Check if any critical
@@ -244,12 +248,12 @@ async def check_and_send_alerts():
                 html = _format_alert_email(alerts_to_send)
                 await send_email(email, subject, html)
 
-                logger.info(f"Tenant {tenant_id}: sent {len(alerts_to_send)} alerts to {email}")
+                print(f"Tenant {tenant_id}: sent {len(alerts_to_send)} alerts to {email}")
 
         db.commit()
 
     except Exception as e:
-        logger.error(f"Alert check failed: {e}")
+        print(f"Alert check failed: {e}")
         db.rollback()
     finally:
         db.close()
