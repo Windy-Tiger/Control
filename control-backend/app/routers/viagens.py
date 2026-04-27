@@ -128,6 +128,8 @@ def create_viagem(
         processo=req.processo,
         bl=req.bl,
         du=req.du,
+        t1_emissao=req.t1_emissao,
+        t1_validade=req.t1_validade,
         motorista=req.motorista,
         carta=req.carta,
         telefone=req.telefone,
@@ -204,6 +206,7 @@ def update_viagem(
         "consignatario": "Consignatário", "t1": "T1", "bl": "BL", "du": "DU",
         "processo": "Nr. Processo", "fiscal_nome": "Agente Fiscal",
         "fiscal_tel": "Tel. Fiscal", "limite": "Limite de Chegada",
+        "t1_emissao": "Data Emissão T1", "t1_validade": "Validade T1",
         "funcionario": "Funcionário",
     }
 

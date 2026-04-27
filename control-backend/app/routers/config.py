@@ -1,13 +1,13 @@
 """
 Control — Config Router
-Tenant configuration: alert settings, frontier contacts.
+Tenant configuration: alert settings, frontier contacts, route baselines.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.database import get_db, Config
-from app.models.schemas import ConfigUpdate, ConfigOut, FronteiraContactsUpdate
+from app.models.schemas import ConfigUpdate, ConfigOut, FronteiraContactsUpdate, RouteBaselinesUpdate
 from app.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/config", tags=["config"])
@@ -47,6 +47,10 @@ def update_config(
         cfg.night_start = req.night_start
     if req.night_end is not None:
         cfg.night_end = req.night_end
+    if req.t1_alert_warning_days is not None:
+        cfg.t1_alert_warning_days = req.t1_alert_warning_days
+    if req.t1_alert_critical_days is not None:
+        cfg.t1_alert_critical_days = req.t1_alert_critical_days
 
     db.commit()
     db.refresh(cfg)
@@ -61,6 +65,19 @@ def update_fronteira_contacts(
 ):
     cfg = _get_or_create_config(db, current_user["tenant_id"])
     cfg.fronteira_contacts_json = req.contacts_json
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
+
+@router.put("/route-baselines", response_model=ConfigOut)
+def update_route_baselines(
+    req: RouteBaselinesUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin),
+):
+    cfg = _get_or_create_config(db, current_user["tenant_id"])
+    cfg.route_baselines_json = req.baselines_json
     db.commit()
     db.refresh(cfg)
     return cfg
