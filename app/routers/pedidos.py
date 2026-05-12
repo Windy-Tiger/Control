@@ -158,9 +158,22 @@ def approve_pedido(
         new_data = json.loads(pedido.new_data_json)
         changes = json.loads(pedido.changes_json) if pedido.changes_json else []
 
+        # DateTime fields need parsing from string
+        datetime_fields = {"t1_emissao", "t1_validade", "limite", "saida"}
+
         for key, val in new_data.items():
             if hasattr(viagem, key):
-                setattr(viagem, key, val)
+                if key in datetime_fields and val and isinstance(val, str):
+                    try:
+                        from datetime import datetime as dt
+                        # Handle various formats
+                        val_clean = val.replace("Z", "+00:00")
+                        parsed = dt.fromisoformat(val_clean)
+                        setattr(viagem, key, parsed)
+                    except (ValueError, TypeError):
+                        setattr(viagem, key, val)
+                else:
+                    setattr(viagem, key, val)
 
         viagem.last_update = utcnow()
 

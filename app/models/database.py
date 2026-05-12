@@ -83,6 +83,8 @@ class Viagem(Base):
     processo = Column(String(100))
     bl = Column(String(100))
     du = Column(String(100))
+    t1_emissao = Column(DateTime(timezone=True))    # T1 issue date
+    t1_validade = Column(DateTime(timezone=True))   # T1 expiry date
 
     # Driver
     motorista = Column(String(200), nullable=False)
@@ -260,6 +262,13 @@ class Config(Base):
 
     # JSON-encoded fronteira contacts: {"Luvo": {"nome":"...", "tel":"..."}, ...}
     fronteira_contacts_json = Column(Text)
+
+    # JSON-encoded route baselines: {"Luvo": 2, "Noqui": 3, "Luau": 5} (days)
+    route_baselines_json = Column(Text)
+
+    # T1 alert thresholds (days)
+    t1_alert_warning_days = Column(Integer, default=3)    # yellow alert
+    t1_alert_critical_days = Column(Integer, default=1)   # red alert
 
     tenant = relationship("Tenant", back_populates="config")
 

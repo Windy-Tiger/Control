@@ -120,6 +120,8 @@ class ViagemCreate(BaseModel):
     processo: Optional[str] = None
     bl: Optional[str] = None
     du: Optional[str] = None
+    t1_emissao: Optional[datetime] = None
+    t1_validade: Optional[datetime] = None
     motorista: str
     carta: Optional[str] = None
     telefone: Optional[str] = None
@@ -164,6 +166,8 @@ class ViagemUpdate(BaseModel):
     fiscal_nome: Optional[str] = None
     fiscal_tel: Optional[str] = None
     limite: Optional[datetime] = None
+    t1_emissao: Optional[datetime] = None
+    t1_validade: Optional[datetime] = None
     funcionario: Optional[str] = None
     custom_fields_json: Optional[str] = None
     reason: str  # always required
@@ -175,6 +179,8 @@ class ViagemOut(BaseModel):
     processo: Optional[str] = None
     bl: Optional[str] = None
     du: Optional[str] = None
+    t1_emissao: Optional[datetime] = None
+    t1_validade: Optional[datetime] = None
     motorista: str
     carta: Optional[str] = None
     telefone: Optional[str] = None
@@ -259,6 +265,8 @@ class ConfigUpdate(BaseModel):
     alert_hours: Optional[float] = None
     night_start: Optional[str] = None
     night_end: Optional[str] = None
+    t1_alert_warning_days: Optional[int] = None
+    t1_alert_critical_days: Optional[int] = None
 
 class ConfigOut(BaseModel):
     email: Optional[str] = None
@@ -266,12 +274,18 @@ class ConfigOut(BaseModel):
     night_start: str = "21:00"
     night_end: str = "05:00"
     fronteira_contacts_json: Optional[str] = None
+    route_baselines_json: Optional[str] = None
+    t1_alert_warning_days: int = 3
+    t1_alert_critical_days: int = 1
 
     class Config:
         from_attributes = True
 
 class FronteiraContactsUpdate(BaseModel):
     contacts_json: str  # JSON: {"Luvo": {"nome":"...", "tel":"..."}, ...}
+
+class RouteBaselinesUpdate(BaseModel):
+    baselines_json: str  # JSON: {"Luvo": 2, "Noqui": 3, "Luau": 5}
 
 
 # ── Completion ──────────────────────────────────────────
