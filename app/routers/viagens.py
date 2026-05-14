@@ -21,6 +21,7 @@ from app.models.schemas import (
     ViagemCreate, ViagemUpdate, ViagemOut, MovimentoUpdate,
     LogEntryCreate, LogEntryEdit, LogEntryOut, PhotoOut,
     ConcluirLuandaRequest, ConcluirFronteiraRequest,
+    DeleteViagemRequest, AguardaProcessamentoRequest,
 )
 from app.auth import get_current_user, require_admin
 
@@ -130,6 +131,8 @@ def create_viagem(
         du=req.du,
         t1_emissao=req.t1_emissao,
         t1_validade=req.t1_validade,
+        t1_partida=req.t1_partida,
+        t1_chegada=req.t1_chegada,
         motorista=req.motorista,
         carta=req.carta,
         telefone=req.telefone,
@@ -206,8 +209,9 @@ def update_viagem(
         "consignatario": "Consignatário", "t1": "T1", "bl": "BL", "du": "DU",
         "processo": "Nr. Processo", "fiscal_nome": "Agente Fiscal",
         "fiscal_tel": "Tel. Fiscal", "limite": "Limite de Chegada",
-        "t1_emissao": "Data Emissão T1", "t1_validade": "Validade T1",
-        "funcionario": "Funcionário",
+        "t1_emissao": "Data Emissão T1", "t1_validade": "Prazo Validade T1",
+        "t1_partida": "Data Partida T1", "t1_chegada": "Data Chegada T1",
+        "funcionario": "Funcionário", "aguarda_processamento": "Aguarda Processamento",
     }
 
     changes = []
@@ -379,15 +383,20 @@ def reactivar(
     return {"ok": True}
 
 
-# ── Delete viagem ───────────────────────────────────────
+# ── Delete viagem (with justification) ──────────────────
 
-@router.delete("/{viagem_id}")
+@router.post("/{viagem_id}/delete")
 def delete_viagem(
     viagem_id: str,
+    req: DeleteViagemRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     v = _get_viagem(db, current_user["tenant_id"], viagem_id)
+
+    # Log the deletion before removing
+    trip_info = f"T1: {v.t1}, Motorista: {v.motorista}, Fronteira: {v.fronteira}"
+    print(f"[DELETE] Viagem {viagem_id} deleted by {current_user['username']}. Reason: {req.reason}. {trip_info}")
 
     # Delete photo files
     photos = db.query(Photo).filter(Photo.viagem_id == v.id).all()
@@ -398,7 +407,34 @@ def delete_viagem(
 
     db.delete(v)
     db.commit()
-    return {"ok": True}
+    return {"ok": True, "reason": req.reason}
+
+
+# ── Aguarda Processamento ───────────────────────────────
+
+@router.post("/{viagem_id}/aguarda-processamento")
+def toggle_aguarda(
+    viagem_id: str,
+    req: AguardaProcessamentoRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    v = _get_viagem(db, current_user["tenant_id"], viagem_id)
+    v.aguarda_processamento = req.aguarda
+    v.last_update = utcnow()
+
+    if req.aguarda:
+        v.movimento = "aguarda"
+        txt = "⏳ Viagem marcada como 'Aguarda Processamento'"
+        if req.obs:
+            txt += f" — {req.obs}"
+        _add_system_log(db, v.id, txt)
+    else:
+        v.movimento = "viagem"
+        _add_system_log(db, v.id, "✓ Processamento concluído — viagem retomada.")
+
+    db.commit()
+    return {"ok": True, "aguarda_processamento": v.aguarda_processamento}
 
 
 # ── Photos ──────────────────────────────────────────────

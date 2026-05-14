@@ -84,7 +84,9 @@ class Viagem(Base):
     bl = Column(String(100))
     du = Column(String(100))
     t1_emissao = Column(DateTime(timezone=True))    # T1 issue date
-    t1_validade = Column(DateTime(timezone=True))   # T1 expiry date
+    t1_validade = Column(DateTime(timezone=True))   # T1 expiry deadline
+    t1_partida = Column(DateTime(timezone=True))    # When T1 left terminal
+    t1_chegada = Column(DateTime(timezone=True))    # When truck arrived at border
 
     # Driver
     motorista = Column(String(200), nullable=False)
@@ -121,8 +123,9 @@ class Viagem(Base):
     last_update = Column(DateTime(timezone=True), default=utcnow)
 
     # Status
-    movimento = Column(String(20), default="viagem")  # viagem | parado
+    movimento = Column(String(20), default="viagem")  # viagem | parado | aguarda
     concluido = Column(Boolean, default=False)
+    aguarda_processamento = Column(Boolean, default=False)  # arrived but pending processing
 
     # Completion — Luanda side
     luanda_done = Column(Boolean, default=False)

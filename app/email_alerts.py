@@ -166,6 +166,10 @@ async def check_and_send_alerts():
             now = datetime.now(timezone.utc)
 
             for v in viagens:
+                # Skip trips in "Aguarda Processamento" — no alerts needed
+                if v.aguarda_processamento:
+                    continue
+
                 # ── T1 Expiration ──
                 if v.t1_validade:
                     days_left = (v.t1_validade.replace(tzinfo=timezone.utc) - now).total_seconds() / 86400

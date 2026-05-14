@@ -159,7 +159,7 @@ def approve_pedido(
         changes = json.loads(pedido.changes_json) if pedido.changes_json else []
 
         # DateTime fields need parsing from string
-        datetime_fields = {"t1_emissao", "t1_validade", "limite", "saida"}
+        datetime_fields = {"t1_emissao", "t1_validade", "t1_partida", "t1_chegada", "limite", "saida"}
 
         for key, val in new_data.items():
             if hasattr(viagem, key):

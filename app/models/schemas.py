@@ -122,6 +122,8 @@ class ViagemCreate(BaseModel):
     du: Optional[str] = None
     t1_emissao: Optional[datetime] = None
     t1_validade: Optional[datetime] = None
+    t1_partida: Optional[datetime] = None
+    t1_chegada: Optional[datetime] = None
     motorista: str
     carta: Optional[str] = None
     telefone: Optional[str] = None
@@ -168,7 +170,10 @@ class ViagemUpdate(BaseModel):
     limite: Optional[datetime] = None
     t1_emissao: Optional[datetime] = None
     t1_validade: Optional[datetime] = None
+    t1_partida: Optional[datetime] = None
+    t1_chegada: Optional[datetime] = None
     funcionario: Optional[str] = None
+    aguarda_processamento: Optional[bool] = None
     custom_fields_json: Optional[str] = None
     reason: str  # always required
 
@@ -181,6 +186,8 @@ class ViagemOut(BaseModel):
     du: Optional[str] = None
     t1_emissao: Optional[datetime] = None
     t1_validade: Optional[datetime] = None
+    t1_partida: Optional[datetime] = None
+    t1_chegada: Optional[datetime] = None
     motorista: str
     carta: Optional[str] = None
     telefone: Optional[str] = None
@@ -204,6 +211,7 @@ class ViagemOut(BaseModel):
     last_update: datetime
     movimento: str
     concluido: bool
+    aguarda_processamento: bool = False
     luanda_done: bool = False
     luanda_done_by: Optional[str] = None
     luanda_done_at: Optional[datetime] = None
@@ -289,6 +297,13 @@ class RouteBaselinesUpdate(BaseModel):
 
 
 # ── Completion ──────────────────────────────────────────
+
+class DeleteViagemRequest(BaseModel):
+    reason: str
+
+class AguardaProcessamentoRequest(BaseModel):
+    aguarda: bool
+    obs: Optional[str] = None
 
 class ConcluirLuandaRequest(BaseModel):
     pass  # just needs auth
